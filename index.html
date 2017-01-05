@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>nodejs message</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="//cdn.bootcss.com/jquery/3.1.0/jquery.min.js"></script>
+</head>
+<body>
+  <div>
+    接受到的消息: <textarea name="" id="message" rows="10" cols="100"></textarea>
+    <br/>
+    请求返回的消息: <textarea name="" id="resultMessage" rows="10" cols="100"></textarea>
+    <br/>
+    <button type="button" id="login">
+      注册
+    </button>
+    <br/>
+    <button type="button" id="socketToOne">
+      发送一个socket消息给另一个socket客户端（token)
+    </button>
+    <br/>
+    <button type="button" id="socketToMany">
+      发送一个socket消息给同用户组客户端（groupKey)
+    </button>
+    <br/>
+    <button type="button" id="socketToHttp">
+      发送一个socket消息发起一个http请求
+    </button>
+    <br/>
+    <button type="checkbox" id="httpToOne">
+      发送一个http消息给一个socket客户端(token)
+    </button>
+    <br/>
+    <button type="checkbox" id="httpToMany">
+      发送一个http消息给一个socket客户端(token)
+    </button>
+    <br/>
+    <button type="checkbox" id="httpToHttp">
+      发送一个http消息发起一个http请求
+    </button>
+  </div>
+
+<script>
+    var socket = io('ws://localhost:8070');
+    socket.on('',function (data) {
+      document.getElementById('message').innerHTML = data;
+    })
+</script>
+<script>
+    var toOneData = JSON.stringify({'token':'23333',"type":"user",
+            'data':{
+                "type": 'number'
+            }
+        });
+    var toManyData = JSON.stringify({"type":"group",groupKey: 'test',
+            'data':{
+                "type": 'HHH'
+            }
+        })
+    var toHttpData = JSON.stringify({
+            "type": "httpMessage",
+              "data": {
+                  "url": "https://www.baidu.com",
+                  "options": {
+                      "method": "GET",
+                      "headers": {
+                          "Content-Type": "application/json;charset=UTF-8"
+                      }
+                  },
+                  "data": JSON.stringify({})
+              }
+          });
+    var loginStatus = false;
+
+    function login() {
+      socket.emit('', JSON.stringify({'type':'login','token':'23333', 'groupKey': 'test'}));
+      loginStatus = true;
+    }
+
+    $('#login').click(() => login());
+
+    $('#socketToOne').click(() => {
+      if (!loginStatus) {
+        login();
+      }
+
+      socket.emit('', toOneData);
+    });
+    $('#socketToMany').click(() => {
+      if (!loginStatus) {
+        login();
+      }
+
+      socket.emit('', toManyData);
+    });
+    $('#socketToHttp').click(() => {
+      if (!loginStatus) {
+        login();
+      }
+
+      socket.emit('', toHttpData);
+    });
+
+    $('#httpToOne').click(() => {
+      $.post('', toOneData, (res) => {
+        $('#resultMessage').html(res);
+      });
+    });
+    $('#httpToMany').click(() => {
+      $.post('', toManyData, (res) => {
+        $('#resultMessage').html(res);
+      });
+    });
+    $('#httpToHttp').click(() => {
+      $.post('', toHttpData, (res) => {
+        $('#resultMessage').html(html_decode(res));
+      })
+    });
+
+    function html_decode(str) {
+      var s = "";
+      if (str.length == 0) return "";
+      s = str.replace(/>/g, "&");
+      s = s.replace(/</g, "@");
+      s = s.replace(/>/g, "#");
+      s = s.replace(/ /g, " ");
+      s = s.replace(/<br>/g, "\n");
+      console.log(s);
+      return s;
+    }
+
+</script>
+</body>
+</html>
